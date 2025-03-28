@@ -1,6 +1,5 @@
-require("dotenv").config()
-const db=require('better-sqlite3')("emplsDataBase.db");
-
+const db=require("./createDataBase");
+require("dotenv").config();
  // database setup here
  const createTable = db.transaction(
     ()=>{
@@ -123,7 +122,7 @@ const db=require('better-sqlite3')("emplsDataBase.db");
     db.prepare(`
         CREATE TABLE IF NOT EXISTS report (
     reportId INTEGER PRIMARY KEY,
-    postId INTEGER REFERENCES cityPost(postId) NOT NULL,
+    postId INTEGER REFERENCES post(postId) NOT NULL,
     townId INTEGER  NOT NULL,
     subCityId INTEGER,
     reportDescription TEXT,
@@ -143,7 +142,7 @@ const db=require('better-sqlite3')("emplsDataBase.db");
     db.prepare(`
         CREATE TABLE IF NOT EXISTS family (
     userId INTEGER REFERENCES normalUser(userId),
-    postId INTEGER REFERENCES cityPost(postId),
+    postId INTEGER REFERENCES post(postId)
 )
          `).run() 
     // table 15

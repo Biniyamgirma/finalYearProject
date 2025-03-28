@@ -1,9 +1,11 @@
 const express = require("express");
 const errorHandler = require("./middleware/errorHandler");
+const createTable= require("./database/createTable");
  require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 3004;
 // console.log(process.env.NAME,"HELLO");
+createTable();
 
 //middelware for handling
 app.use(express.json());
@@ -22,11 +24,11 @@ app.use(function(req,res,next){
      // console.log(req.user)
     next();
 })
-app.use("/api/police",require("./routes/contactRoutes"));// there is no any error in the route i just need to use localhost:4023/api/police
+//app.use("/api/police",require("./routes/contactRoutes"));// there is no any error in the route i just need to use localhost:4023/api/police
 app.use("/api/police/admin",require("./routes/policeOfficerAdminRoute"));
 app.use("/api/police/police/officer",require("./routes/policeOfficerRoute"));
 app.use("/api/police/user",require("./routes/regularUserRoute"));
-app.use("/api/police/root",require("./routes/rootAdminRoute"));
+app.use("/api/police/root",require("./routes/routesForRootAdmin/rootAdminRoute"));
 app.use(errorHandler);
 //@server port listener i dont know why but it uses port 3004 not the env port
 
