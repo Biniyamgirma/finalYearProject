@@ -75,3 +75,12 @@ const updatePoliceStationInfo = (req,res)=>{
     res.json({"message":"post method","name":`${policeStationName}`
     });
 }
+module.exports={
+    registerPoliceStation,
+    registerPoliceOfficerAdmin,
+    updatePoliceOfficerInfo,
+    deletePoliceOfficer,
+    getAllPoliceOfficer,
+    getAllPoliceStationInfo,
+    updatePoliceStationInfo
+}

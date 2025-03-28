@@ -3,11 +3,8 @@
 //3,send message to other police station admins
 //4,get notifed about the cases or reports in the area
 //5,
-const express = require('express');
-const router = express.Router();
-// test
-router.route("/").get();
-module.exports = router;
+const db=require("../database/createDataBase.js");
+
 //@desc Register a new admin in the database
 //@route POST /api/adminside/register
 //@access point for know public
@@ -73,3 +70,75 @@ module.exports = router;
 //     const alertsInPost =lookupStatement.all(postId)
 //     res.json({alertsInPost})
 // }
+
+// new here
+//@desc get all police officer information in the database
+// //@route GET /api/police/getAllPoliceOfficer
+//@access point for know public
+const getAllPoliceOfficer = (req,res)=>{
+    const ourStatment = db.prepare("SELECT * FROM policeOfficer")
+    const result = ourStatment.all()
+    res.status(201);
+    res.json({"message":"post method","name":`${result}`
+    });
+}
+//@desc get all police station information in the database were we added the police station
+//@route GET /api/police/getAllPoliceStation
+//@access point for know public
+const getAllPoliceStationInfo = (req,res)=>{
+    const ourStatment = db.prepare("SELECT * FROM policeStation")
+    const result = ourStatment.all()
+    res.status(201);
+    res.json({"message":"post method","name":`${result}`
+    });
+}
+//@ get all posts which the police officer added in the database
+//@route GET /api/police/getAllPosts
+//@access point for know public
+const getAllPosts = (req,res)=>{
+    const ourStatment = db.prepare("SELECT * FROM posts")
+    const result = ourStatment.all()
+    res.status(201);
+    res.json({"message":"post method","name":`${result}`
+    });
+}
+//@desc get spacific post information in the database
+//@route GET /api/police/getPosts:id
+//@access point for know public
+const getPost = (req,res)=>{
+    const ourStatment = db.prepare("SELECT * FROM posts WHERE postId = ?")
+    const result = ourStatment.get(req.params.id)
+    res.status(201);
+    res.json({"message":"post method","name":`${result}`
+    });
+}
+//@desc get alart specific to police station information in the database
+//@route GET /api/police/getAlart:id
+//@access point for know public
+const getAlart = (req,res)=>{
+    const ourStatment = db.prepare("SELECT * FROM alert WHERE postPoliceStationId = ?")
+    const result = ourStatment.get(req.params.id)
+    res.status(201);
+    res.json({"message":"post method","name":`${result}`
+    });
+}
+//@desc get all message information in the database
+//@route GET /api/police/getMessage:id
+//@access point for know public
+const getMessage = (req,res)=>{
+    const ourStatment = db.prepare("SELECT * FROM message WHERE reciversId = ?")
+    const result = ourStatment.get(req.params.id)
+    res.status(201);
+    res.json({"message":"post method","name":`${result}`
+    });
+}
+//@desc get indivibual message information in the database
+//@route GET /api/police/getMessage:id
+//@access point for know public
+const getIndivibualMessage = (req,res)=>{
+    const ourStatment = db.prepare("SELECT * FROM message WHERE messageId = ?")
+    const result = ourStatment.get(req.params.id)
+    res.status(201);
+    res.json({"message":"post method","name":`${result}`
+    });
+}
