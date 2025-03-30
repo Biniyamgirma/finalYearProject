@@ -17,37 +17,41 @@ CREATE TABLE IF NOT EXISTS post (
     personStatus TEXT NOT NULL,
     imagePath TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
+)
 
 -- table for zonePost
 
 CREATE TABLE IF NOT EXISTS zonePost (
     postId INTEGER REFERENCES post(postId),
     zoneId INTEGER REFERENCES zone(zoneId)
-);
+)
 
 -- table for regionPost
 CREATE TABLE IF NOT EXISTS regionPost (
-    postId INTEGER REFERENCES post(postId),
+    postId INTEGER REFERENCES post(postId) NOT NULL,
     regionId INTEGER REFERENCES region(regionId) NOT NULL
    
 )
 
 --table for ethiopianPost
 CREATE TABLE IF NOT EXISTS ethiopiaPost (
-    postId INTEGER REFERENCES post(postId),
+    postId INTEGER REFERENCES post(postId) NOT NULL,
     countryId INTEGER REFERENCES country(countryId) NOT NULL
-   
 )
 
 -- table for policeOfficer
 CREATE TABLE IF NOT EXISTS policeOfficer (
     policeOfficerId INTEGER PRIMARY KEY,
     policeOfficerFname TEXT NOT NULL,
+    policeOfficerMname TEXT NOT NULL,
     policeOfficerLname TEXT NOT NULL,
     profilePicture TEXT NOT NULL,
     policeOfficerRoleName TEXT NOT NULL,
-    policeOfficerStutas int NOT NULL,
+    policeOfficerStatus INTEGER NOT NULL,
+    policeOfficerPhoneNumber TEXT NOT NULL,
+    policeOfficerGender TEXT NOT NULL,
+    policeOfficerBirthdate TEXT NOT NULL,
+    passwordText TEXT NOT NULL,
     policeStationId INTEGER REFERENCES policeStation(policeStationId) NOT NULL
 )
 
@@ -62,8 +66,7 @@ CREATE TABLE IF NOT EXISTS policeStation (
     townId INTEGER REFERENCES town(townId) NOT NULL,
     subCityId INTEGER REFERENCES subCity(subCityId) NOT NULL,
     rootId INTEGER REFERENCES root(rootId) NOT NULL,
-    adminId INTEGER REFERENCES policeOfficer(policeOfficerId) NOT NULL -- what if i converted the admin id to a string of text that are hard to guess
-
+    adminId INTEGER REFERENCES policeOfficer(policeOfficerId) NOT NULL 
 )
 -- table for region
 CREATE TABLE IF NOT EXISTS region (
@@ -98,9 +101,9 @@ CREATE TABLE IF NOT EXISTS country (
 -- table for report from user
 CREATE TABLE IF NOT EXISTS report (
     reportId INTEGER PRIMARY KEY,
-    postId INTEGER REFERENCES cityPost(postId) NOT NULL,
-    townId INTEGER  NOT NULL,
-    subCityId INTEGER,
+    postId INTEGER REFERENCES post(postId) NOT NULL,
+    townId INTEGER REFERENCES town(townId) NOT NULL,
+    subCityId INTEGER REFERENCES subCity(subCityId),
     reportDescription TEXT,
     userId INTEGER,
     policeStationId INTEGER REFERENCES policeStation(policeStationId)
@@ -115,13 +118,14 @@ CREATE TABLE IF NOT EXISTS root (
 
 CREATE TABLE IF NOT EXISTS family (
     userId INTEGER REFERENCES normalUser(userId),
-    postId INTEGER REFERENCES cityPost(postId),
+    postId INTEGER REFERENCES post(postId)
 )
 
 CREATE TABLE IF NOT EXISTS normalUser (
     userId INTEGER PRIMARY KEY,
-    username TEXT NOT NULL,
-    userPhoneNumber TEXT NOT NULL,
+    firstName TEXT NOT NULL,
+    lastName TEXT NOT NULL,
+    phoneNumber TEXT NOT NULL,
     townId INTEGER REFERENCES town(townId) NOT NULL,
     subCityId TEXT REFERENCES subCity(subCityId),
     passwordText TEXT NOT NULL,
@@ -138,9 +142,10 @@ CREATE TABLE IF NOT EXISTS criminal (
     hairColor TEXT,
     height TEXT,
     bodyType TEXT,
+    age INTEGER,
+    gender TEXT,
     fileNumber TEXT,
-    policeStationId INTEGER
-
+    policeStationId INTEGER REFERENCES policeStation(policeStationId),
 )
 
 -- creating message table
@@ -151,14 +156,14 @@ CREATE TABLE message(
     message TEXT,
     sentAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     isRead INTEGER
-);
+)
 CREATE TABLE IF NOT EXISTS alert(
+    alertId INTEGER PRIMARY KEY,
     postId INTEGER REFERENCES post(postId),
-    townId INTEGER REFERENCES town(townId),
-    subCityId INTEGER,
     localPoliceStationId INTEGER REFERENCES policeStation(policeStationId),
     postPoliceStationId INTEGER REFERENCES policeStation(policeStationId),
     isRead INTEGER,
+    priority INTEGER,
     reportId INTEGER REFERENCES report(reportId)
 )
 -- i think i need to add somthing called tagged case

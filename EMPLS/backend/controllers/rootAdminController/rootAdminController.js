@@ -4,31 +4,56 @@ const db=require("../database/createDataBase.js");
 //@route POST /api/police/root
 //@access point for know public
 const registerPoliceStation = (req,res)=>{
-    const {policeStationName,policeStationLocation,policeStationStatus}=req.body;
-    const ourStatment = db.prepare("INSERT INTO policeStation(policeStationName, policeStationLocation, policeStationStatus) VALUES (?, ?, ?)")
-    const result = ourStatment.run(policeStationName,policeStationLocation,policeStationStatus)
+    const {nameOfPoliceStation,policeStationPhoneNumber,secPoliceStationPhoneNumber,policeStationLogo,townId,subCityId,rootId,adminId}=req.body;
+    const ourStatment = db.prepare("INSERT INTO policeStation(nameOfPoliceStation,policeStationPhoneNumber,secPoliceStationPhoneNumber,PoliceStationLogo,townId,subCityId,rootId,adminId) VALUES (?, ?, ?,?,?,?,?,?)")
+    const result = ourStatment.run(nameOfPoliceStation,policeStationPhoneNumber,secPoliceStationPhoneNumber,policeStationLogo,townId,subCityId,rootId,adminId);
+    if(!result){
+        res.status(400);
+        throw new Error("there is a problem with the data you are trying to insert");;
+    }
     res.status(201);
-    res.json({"message":"post method","name":`${policeStationName}`
-    });
+    res.json({"message":"data inserted successfully","name":`${nameOfPoliceStation}`});
 }
 //@desc register a new police officer in the database  
 //@route POST /api/police/registerPoliceOfficer
 //@access point for know public
 const registerPoliceOfficerAdmin = (req,res)=>{// i need to add the admin id to the police officer table
-    const {policeStationId,policeOfficerFname,policeOfficerLname,profilePicture,policeOfficerRoleName,policeOfficerStatus}=req.body;
-    const ourStatment = db.prepare("INSERT INTO policeOfficer(policeStationId, policeOfficerFname, policeOfficerLname, profilePicture, policeOfficerRoleName, policeOfficerStatus) VALUES (?, ?, ?, ?, ?, ?)")
-    const result = ourStatment.run(policeStationId,policeOfficerFname,policeOfficerLname,profilePicture,policeOfficerRoleName,policeOfficerStatus)
+    const {policeStationId,policeOfficerFname,policeOfficerMname,policeOfficerLname,profilePicture,policeOfficerRoleName,policeOfficerStatus,policeOfficerPhoneNumber,password}=req.body;
+    // hash the password using bcrypt
+    const bcrypt = require('bcrypt');
+    const saltRounds = 10;
+    const passwordHash = bcrypt.hashSync(password, saltRounds);
+    // check if the password is hashed or not
+    // console.log(passwordHash)
+    // check if the password is hashed or not
+    // console.log(bcrypt.compareSync(password, passwordHash))
+    // check if the password is hashed or not
+
+    const ourStatment = db.prepare("INSERT INTO policeOfficer(policeOfficerFname,policeOfficerMname,policeOfficerLname,profilePicture,policeOfficerRoleName,policeOfficerStatus,policeOfficerPhoneNumber,policeOfficerGender,policeOfficerBirthdate,passwordText,policeStationId) VALUES (?, ?, ?, ?, ?, ?,?,?,?,?,?)")
+    const result = ourStatment.run(policeOfficerFname,policeOfficerMname,policeOfficerLname,profilePicture,policeOfficerRoleName,policeOfficerStatus,policeOfficerPhoneNumber,policeOfficerGender,policeOfficerBirthdate,passwordHash ,policeStationId);
+    if(!result){    
+        res.status(400);
+        throw new Error("there is a problem with the data you are trying to insert");;
+    }
     res.status(201);
     res.json({"message":"post method","name":`${policeStationName}`
     });
 }
 //@desc update police officer information in the database
-//@route PUT /api/police/updatePoliceOfficer
+//@route PUT /api/police/updatePoliceOfficer:id
 //@access point for know public
 const updatePoliceOfficerInfo = (req,res)=>{
-    const {policeStationId,policeOfficerFname,policeOfficerLname,profilePicture,policeOfficerRoleName,policeOfficerStatus}=req.body;
-    const ourStatment = db.prepare("UPDATE policeOfficer SET policeStationId=?, policeOfficerFname=?, policeOfficerLname=?, profilePicture=?, policeOfficerRoleName=?, policeOfficerStatus=? WHERE policeStationId=?")
-    const result = ourStatment.run(policeStationId,policeOfficerFname,policeOfficerLname,profilePicture,policeOfficerRoleName,policeOfficerStatus)
+    const {policeStationId,policeOfficerFname,policeOfficerMname,policeOfficerLname,profilePicture,policeOfficerRoleName,policeOfficerStatus,policeOfficerPhoneNumber,policeOfficerBirthdate,policeOfficerGender,password}=req.body;
+    // hash the password using bcrypt
+    const bcrypt = require('bcrypt');
+    const saltRounds = 10;
+    const passwordHash = bcrypt.hashSync(password, saltRounds);
+    // check if the password is hashed or not
+    // console.log(passwordHash)
+    // check if the password is hashed or not
+    // console.log(bcrypt.compareSync(password, passwordHash))
+    const ourStatment = db.prepare("UPDATE policeOfficer SET policeStationId=?, policeOfficerFname=?,policeOfficerMname=?, policeOfficerLname=?, profilePicture=?, policeOfficerRoleName=?, policeOfficerStatus=?,policeOfficerPhoneNumber=?,passwordText=?,policeOfficerBirthdate=?,policeOfficerGender=? WHERE policeStationId=?")
+    const result = ourStatment.run(policeStationId,policeOfficerFname,policeOfficerMname,policeOfficerLname,profilePicture,policeOfficerRoleName,policeOfficerStatus,policeOfficerPhoneNumber,passwordHash,policeOfficerBirthdate,policeOfficerGender)
     res.status(201);
     res.json({"message":"post method","name":`${policeStationName}`
     });
