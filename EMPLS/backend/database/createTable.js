@@ -61,6 +61,7 @@ require("dotenv").config();
     policeOfficerGender TEXT NOT NULL,
     policeOfficerBirthdate TEXT NOT NULL,
     passwordText TEXT NOT NULL,
+    role INTEGER NOT NULL,
     policeStationId INTEGER REFERENCES policeStation(policeStationId) NOT NULL
 )
 
@@ -141,6 +142,7 @@ require("dotenv").config();
     CREATE TABLE IF NOT EXISTS root (
     rootId INTEGER PRIMARY KEY,
     username TEXT NOT NULL,
+    role INTEGER NOT NULL,
     passwordText TEXT NOT NULL
 )
          `).run() 
@@ -161,6 +163,7 @@ require("dotenv").config();
     townId INTEGER REFERENCES town(townId) NOT NULL,
     subCityId TEXT REFERENCES subCity(subCityId),
     passwordText TEXT NOT NULL,
+    role INTEGER NOT NULL,
     userStatus INTEGER NOT NULL
 )
          `).run() 

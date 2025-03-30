@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS policeOfficer (
     policeOfficerGender TEXT NOT NULL,
     policeOfficerBirthdate TEXT NOT NULL,
     passwordText TEXT NOT NULL,
+    role INTEGER NOT NULL,
     policeStationId INTEGER REFERENCES policeStation(policeStationId) NOT NULL
 )
 
@@ -113,6 +114,7 @@ CREATE TABLE IF NOT EXISTS report (
 CREATE TABLE IF NOT EXISTS root (
     rootId INTEGER PRIMARY KEY,
     username TEXT NOT NULL,
+    role INTEGER NOT NULL,
     passwordText TEXT NOT NULL
 )
 
@@ -129,6 +131,7 @@ CREATE TABLE IF NOT EXISTS normalUser (
     townId INTEGER REFERENCES town(townId) NOT NULL,
     subCityId TEXT REFERENCES subCity(subCityId),
     passwordText TEXT NOT NULL,
+    role INTEGER NOT NULL,
     userStatus INTEGER NOT NULL
 )
 
