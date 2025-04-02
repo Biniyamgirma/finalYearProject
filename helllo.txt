@@ -1,0 +1,4 @@
+BEGIN TRANSACTION;
+INSERT INTO policeStation (nameOfPoliceStation,policeStationPhoneNumber,secPoliceStationPhoneNumber,policeStationLogo,townId,subCityId,rootId,adminId) VALUES('TEST','01151111','011222222','hello.jpg',631,0,1,1);
+INSERT INTO policeOfficer(policeOfficerFname,policeOfficerMname,policeOfficerLname,profilePicture,policeOfficerRoleName,policeOfficerStatus,policeOfficerPhoneNumber,policeOfficerGender,policeOfficerBirthdate,passwordText,role,policeStationId) VALUES ('test','test','test','test.jpg','inspecter',0,'0923252627','male','1995','1234@1234','2','1');
+COMMIT;

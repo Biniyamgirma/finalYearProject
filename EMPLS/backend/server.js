@@ -1,12 +1,14 @@
 const express = require("express");
 const errorHandler = require("./middleware/errorHandler");
 const createTable= require("./database/createTable");
+const db=require("./database/createDataBase")
  require("dotenv").config();
 const app = express();
+
 const port = process.env.PORT || 3004;
 // console.log(process.env.NAME,"HELLO");
 createTable();
-
+// db.close();
 //middelware for handling
 app.use(express.json());
 app.use(express.urlencoded({extended:false}))
@@ -30,10 +32,19 @@ app.use("/api/police/police/officer",require("./routes/policeOfficerRoute"));
 app.use("/api/police/user",require("./routes/regularUserRoute"));
 app.use("/api/police/root",require("./routes/routesForRootAdmin/rootAdminRoute"));
 app.use(errorHandler);
-//@server port listener i dont know why but it uses port 3004 not the env port
+
+
+
 
 // app.get("/api/police",(req,res)=>{
-//     res.json({message:"hello from server if this message displays this mean that the error is in the middle ware"})
+//   const ourStatment = db.prepare("INSERT INTO region (regionId, regionName) VALUES('Addis Ababa', 1)");
+//   const result=ourStatment.run();
+//   if(!result){
+//     console.log("there is a problem with the data you are trying to insert");;
+//   }
+//   console.log(result)
+//   res.send("hello from add region route")
+
 // })
 
 app.listen(port,()=>{

@@ -1,0 +1,15 @@
+// json for police officer registaration
+{
+    "policeOfficerFname":"Biniyam",
+    "policeOfficerMname":"Girma",
+    "policeOfficerLname":"Alemu",
+    "profilePicture":"thisisme.jpg",
+    "policeRoleName":"Inspecter",
+    "policeOfficerStatus":1,
+    "policeOfficerPhoneNumber":"0923242576",
+    "policeOfficerGender":"male",
+    "policeOfficerBirthDate":"1995",
+    "passwordText":"biniyam123",
+    "role":2,
+    "policeStationId":1
+   }
