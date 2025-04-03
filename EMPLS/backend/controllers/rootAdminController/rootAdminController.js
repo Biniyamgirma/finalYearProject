@@ -1235,78 +1235,193 @@ const registerPoliceStation = (req,res)=>{
 //@desc register a new police officer in the database  
 //@route POST /api/police/registerPoliceOfficer
 //@access point for know public
-const registerPoliceOfficerAdmin = (req,res)=>{// i need to add the admin id to the police officer table
-    const {policeStationId,policeOfficerFname,policeOfficerMname,policeOfficerLname,profilePicture,policeOfficerRoleName,policeOfficerStatus,policeOfficerPhoneNumber,passwordText,policeOfficerGender,policeOfficerBirthdate,role}=req.body;
-    // hash the password using bcrypt
-    console.log(req.body)
-   
-    const saltRounds = 10;
-    const passwordHash = bcrypt.hashSync(password, saltRounds);
-    // check if the password is hashed or not
-    console.log(passwordHash)
-    // check if the password is hashed or not
-    console.log(bcrypt.compareSync(password, passwordHash))
-    // check if the password is hashed or not
+const registerPoliceOfficerAdmin = async (req, res) => {
+    const {
+        policeOfficerFname,
+        policeOfficerMname,
+        policeOfficerLname,
+        profilePicture,
+        policeOfficerRoleName,
+        policeOfficerStatus,
+        policeOfficerPhoneNumber,
+        passwordText,
+        policeOfficerGender,
+        policeOfficerBirthdate,
+        role,
+        policeStationId
+    } = req.body;
+
+    // Validate required fields
+    if (!policeOfficerFname || !policeOfficerLname || !passwordText || !policeOfficerPhoneNumber) {
+        return res.status(400).json({ message: "Missing required fields" });
+    }
 
     try {
-        const ourStatment = db.prepare("INSERT INTO policeOfficer(policeOfficerFname,policeOfficerMname,policeOfficerLname,profilePicture,policeOfficerRoleName,policeOfficerStatus,policeOfficerPhoneNumber,policeOfficerGender,policeOfficerBirthdate,passwordText,role,policeStationId) VALUES (?, ?, ?, ?, ?, ?,?,?,?,?,?,?)")
-        const result = ourStatment.run(policeOfficerFname,policeOfficerMname,policeOfficerLname,profilePicture,policeOfficerRoleName,policeOfficerStatus,policeOfficerPhoneNumber,policeOfficerGender,policeOfficerBirthdate,passwordText , role,policeStationId);
-        res.status(201);
-    res.json({"message":"post method","message":`${policeStationName} is inserted into the database succussfully`});
+        // Hash the password
+        const saltRounds = 10;
+        const passwordHash = await bcrypt.hash(passwordText, saltRounds);
+
+        // Insert into database
+        const statement = db.prepare(`
+            INSERT INTO policeOfficer (
+                policeOfficerFname,
+                policeOfficerMname,
+                policeOfficerLname,
+                profilePicture,
+                policeOfficerRoleName,
+                policeOfficerStatus,
+                policeOfficerPhoneNumber,
+                policeOfficerGender,
+                policeOfficerBirthdate,
+                passwordText,
+                role,
+                policeStationId
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        const result = statement.run(
+            policeOfficerFname,
+            policeOfficerMname,
+            policeOfficerLname,
+            profilePicture,
+            policeOfficerRoleName,
+            policeOfficerStatus,
+            policeOfficerPhoneNumber,
+            policeOfficerGender,
+            policeOfficerBirthdate,
+            passwordHash,
+            role,
+            policeStationId
+        );
+
+        if (result.changes > 0) {
+            return res.status(201).json({
+                message: "Police officer registered successfully",
+                id: result.lastInsertRowid
+            });
+        } else {
+            return res.status(500).json({ message: "Failed to insert data" });
+        }
     } catch (error) {
-             res.status(400);
-        throw new Error("there is a problem with the data you are trying to insert");
+        console.error("Database error:", error);
+        return res.status(500).json({ message: "Error in data insertion", error: error.message });
     }
-   
-   
-    // if(!result){    
-    //     res.status(400);
-    //     throw new Error("there is a problem with the data you are trying to insert");
-    // }
-    // res.status(201);
-    // res.json({"message":"post method","name":`${policeStationName}`
-    // });
-}
+};
 //@desc update police officer information in the database
-//@route PUT /api/police/updatePoliceOfficer:id
+//@route PUT http://localhost:4023/api/police/root/police-officers/1
 //@access point for know public
-const updatePoliceOfficerInfo = (req,res)=>{
-    const {policeStationId,policeOfficerFname,policeOfficerMname,policeOfficerLname,profilePicture,policeOfficerRoleName,policeOfficerStatus,policeOfficerPhoneNumber,policeOfficerBirthdate,policeOfficerGender,password}=req.body;
-    // hash the password using bcrypt
-    const bcrypt = require('bcrypt');
-    const saltRounds = 10;
-    const passwordHash = bcrypt.hashSync(password, saltRounds);
-    // check if the password is hashed or not
-    // console.log(passwordHash)
-    // check if the password is hashed or not
-    // console.log(bcrypt.compareSync(password, passwordHash))
-    const ourStatment = db.prepare("UPDATE policeOfficer SET policeStationId=?, policeOfficerFname=?,policeOfficerMname=?, policeOfficerLname=?, profilePicture=?, policeOfficerRoleName=?, policeOfficerStatus=?,policeOfficerPhoneNumber=?,passwordText=?,policeOfficerBirthdate=?,policeOfficerGender=? WHERE policeStationId=?")
-    const result = ourStatment.run(policeStationId,policeOfficerFname,policeOfficerMname,policeOfficerLname,profilePicture,policeOfficerRoleName,policeOfficerStatus,policeOfficerPhoneNumber,passwordHash,policeOfficerBirthdate,policeOfficerGender)
-    res.status(201);
-    res.json({"message":"post method","name":`${policeStationName}`
-    });
-}
-//@desc update police officer information in the database
-//@route DELETE /api/police/updatePoliceOfficer
+const updatePoliceOfficerInfo = async (req, res) => {
+    const {
+        policeStationId,
+        policeOfficerFname,
+        policeOfficerMname,
+        policeOfficerLname,
+        profilePicture,
+        policeOfficerRoleName,
+        policeOfficerStatus,
+        policeOfficerPhoneNumber,
+        policeOfficerBirthdate,
+        policeOfficerGender,
+        passwordText
+    } = req.body;
+    const { id } = req.params; // Extract policeOfficerId from request parameters
+    console.log(id);
+    console.log(req.body);
+    try {
+        // Hash the password (use either hash or hashSync, not both)
+        const saltRounds = 10;
+        const passwordHash = await bcrypt.hash(passwordText, saltRounds);
+
+        const statement = db.prepare(`UPDATE policeOfficer SET 
+            policeOfficerFname = ?,
+            policeOfficerMname = ?,
+            policeOfficerLname = ?,
+            profilePicture = ?, 
+            policeOfficerRoleName = ?,
+            policeOfficerStatus = ?,
+            policeOfficerPhoneNumber = ?,
+            passwordText = ?,
+            policeOfficerBirthdate = ?,
+            policeOfficerGender = ?,
+            policeStationId = ?
+            WHERE policeOfficerId = ?`);
+
+        const result = statement.run(
+            policeOfficerFname,
+            policeOfficerMname,
+            policeOfficerLname,
+            profilePicture,
+            policeOfficerRoleName,
+            policeOfficerStatus,
+            policeOfficerPhoneNumber,
+            passwordHash,
+            policeOfficerBirthdate,
+            policeOfficerGender,
+            policeStationId,
+            id  // This should be last to match the WHERE clause
+        );
+
+        if (result.changes > 0) {
+            res.status(200).json({
+                message: "Police officer updated successfully",
+                name: policeOfficerFname
+            });
+        } else {
+            res.status(404).json({
+                message: "No police officer found with that ID"
+            });
+        }
+    } catch (error) {
+        console.error("Update error:", error);
+        res.status(500).json({
+            message: "Error updating police officer",
+            error: error.message
+        });
+    }
+};
+//@desc delete police officer information in the database
+//@route DELETE http://localhost:4023/api/police/root/delete-officer
 //@access point for know public
 const deletePoliceOfficer = (req,res)=>{
-    const {policeOfficerId}=req.body;
-    const ourStatment = db.prepare("DELETE FROM policeOfficer WHERE policeOfficerId=?");
-    const result = ourStatment.run(policeOfficerId)
+    const {policeOfficerId,policeStationId}=req.body;
+    const sql=`SELECT * FROM policeOfficer WHERE policeOfficerId=?`;
+    const nameOfPoliceOfficer = db.prepare(sql);
+    const data = nameOfPoliceOfficer.get(policeOfficerId);
+    const firstName = data.policeOfficerFname;
+    const middleName = data.policeOfficerMname;
+    const lastName = data.policeOfficerLname;
+    const ourStatment = db.prepare("DELETE FROM policeOfficer WHERE policeOfficerId=? AND policeStationId=?");
+    const result = ourStatment.run(policeOfficerId , policeStationId);
+    if (result.changes > 0) {
     res.status(201);
-    res.json({"message":"post method","name":`${policeStationName}`
+    res.json({"message":"police officer data is deleted","First Name":`${firstName}`,"Middle Name":`${middleName}`,"Last Name":`${lastName}`,
     });
+} else {
+    res.status(404).json({ message: "No police officer found with that ID" });
+}
 }
 //@desc get all police officer admin information in the database
 //@route GET /api/police/getAllPoliceOfficer
 //@access point for know public
-const getAllPoliceOfficer = (req,res)=>{
-    const ourStatment = db.prepare("SELECT * FROM policeOfficer")
-    const result = ourStatment.all()
-    res.status(201);
-    res.json({"message":"post method","data":"hello from database" ,          //`${result}`
-    });
-}
+const getAllPoliceOfficer = (req, res) => {
+    try {
+        const statement = db.prepare("SELECT * FROM policeOfficer");
+        const result = statement.all();
+        
+        res.status(200).json({
+            success: true,
+            count: result.length,
+            data: result  // Send the raw array (no template literal)
+        });
+    } catch (error) {
+        console.error("Database error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to retrieve police officers",
+            error: error.message
+        });
+    }
+};
 //@desc get all police station information in the database
 //@route GET /api/police/getAllPoliceStation
 //@access point for know public
@@ -1314,7 +1429,11 @@ const getAllPoliceStationInfo = (req, res) => {
     try {
         const ourStatment = db.prepare("SELECT * FROM policeStation");
         const result = ourStatment.all();
-        res.status(200).json({ data: result });
+        res.status(200).json({
+            success: true,
+            count: result.length,
+            data: result
+             });
     } catch (error) {
         res.status(500).json({ error: "An error occurred while fetching data." });
     }
