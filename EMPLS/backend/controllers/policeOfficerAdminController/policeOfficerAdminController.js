@@ -1,14 +1,5 @@
-//#### admins can hve the following privilages 1)register new police officer in the area
-//2,add police station with in there area
-//3,send message to other police station admins
-//4,get notifed about the cases or reports in the area
-//5,
-const db=require("../database/createDataBase.js");
-
-// @desc Register a new admin in the database
-// @route POST 
-// @access point for know public
-
+const db=require("../../database/createDataBase");
+const bcrypt = require("bcrypt");
 // @desc    Register a new police officer admin
 // @route   POST /api/adminside/register
 // @access  Private (should be protected with admin auth middleware)
@@ -310,91 +301,512 @@ const postAlert =(req,res)=>{
 // //@desc alert the police station that added the post about possabil sight
 // //@route POST /api/police/postpolicestationalert
 // //@access point for know public
-const viewReportForSpecificPost =(req,res)=>{
-    const{postId}= req.body;
-    const lookupStatement = db.prepare("SELECT * FROM report WHERE postId = ? ")
-    const alertsInPost =lookupStatement.all(postId)
-    res.json({alertsInPost})
-}
+const viewReportForSpecificPost = (req, res) => {
+    const { postId } = req.body;
+
+    // Validate postId is provided
+    if (!postId) {
+        return res.status(400).json({
+            success: false,
+            error: "postid is required"
+        });
+    }
+
+    try {
+        // Get all reports for the specified post
+        const lookupStatement = db.prepare(`
+            SELECT * FROM report 
+            WHERE postId = ?
+            ORDER BY reportDate DESC
+        `);
+        const reports = lookupStatement.all(postId);
+
+        // If no reports found
+        if (reports.length === 0) {
+            return res.json({
+                success: true,
+                message: "No reports found for this post",
+                count: 0,
+                data: []
+            });
+        }
+
+        res.json({
+            success: true,
+            count: reports.length,
+            data: reports
+        });
+
+    } catch (error) {
+        console.error("Error fetching reports for post:", error);
+        res.status(500).json({
+            success: false,
+            error: "Internal server error while fetching reports"
+        });
+    }
+};
 
 // new here
 //@desc get all police officer information in the database
 // //@route GET /api/police/getAllPoliceOfficer
 //@access point for know public
-// const getAllPoliceOfficer = (req,res)=>{
-//     const ourStatment = db.prepare("SELECT * FROM policeOfficer WHERE policeStationId=?")
-//     const result = ourStatment.run()
-//     res.status(201);
-//     res.json({"message":"post method","name":`${result}`
-//     });
-// }
+const getAllPoliceOfficerInOurPoliceStation = (req, res) => {
+    const { policeStationId } = req.body;
+
+    // Validate policeStationId is provided
+    if (!policeStationId) {
+        return res.status(400).json({
+            success: false,
+            error: "policeStationId is required in the request body"
+        });
+    }
+
+    try {
+        // Get all officers for the specified police station
+        const statement = db.prepare(`
+            SELECT policeOfficerId, policeOfficerFname, policeOfficerMname,policeOfficerLname,policeOfficerRoleName,policeOfficerStatus
+            FROM policeOfficer 
+            WHERE policeStationId = ?
+            ORDER BY firstName, lastName
+        `);
+        const officers = statement.all(policeStationId);
+
+        // If no officers found
+        if (officers.length === 0) {
+            return res.json({
+                success: true,
+                message: "No officers found in this police station",
+                count: 0,
+                data: []
+            });
+        }
+
+        res.json({
+            success: true,
+            count: officers.length,
+            data: officers
+        });
+
+    } catch (error) {
+        console.error("Error fetching police officers:", error);
+        res.status(500).json({
+            success: false,
+            error: "Internal server error while fetching officers data"
+        });
+    }
+};
 //@desc get all police station information in the database were we added the police station
 //@route GET /api/police/getAllPoliceStation
 //@access point for know public
-const getAllPoliceStationInfo = (req,res)=>{
-    const ourStatment = db.prepare("SELECT * FROM policeStation")
-    const result = ourStatment.all()
-    res.status(201);
-    res.json({"message":"post method","name":`${result}`
-    });
-}
+const getSpecificPoliceStationInfo = (req, res) => {
+    const { id } = req.params;
+
+    // Validate ID parameter
+    if (!id || isNaN(Number(id))) {
+        return res.status(400).json({
+            success: false,
+            error: "Valid police station ID is required in the URL parameters"
+        });
+    }
+
+    try {
+        // Get specific police station with selected columns
+        const statement = db.prepare(`
+            SELECT 
+                nameOfPoliceStation,
+                policeStationPhoneNumber,
+                secPoliceStationPhoneNumber,
+                policeStationLogo,
+                townId,
+                subCityId,
+                rootId
+            FROM policeStation 
+            WHERE policeStationId = ?
+        `);
+        
+        const station = statement.get(id);
+
+        // If station not found
+        if (!station) {
+            return res.status(404).json({
+                success: false,
+                error: "Police station not found with the provided ID"
+            });
+        }
+        const { nameOfPoliceStation, policeStationPhoneNumber, secPoliceStationPhoneNumber, policeStationLogo, townId, subCityId, rootId } = station;
+        const sqlTownTable ="SELECT * FROM town WHERE townId = ?";
+        const sqlSubCityTable ="SELECT subCityName FROM subCity WHERE subCityId = ?";
+        const sqlRootTable ="SELECT username FROM root WHERE rootId = ?";
+        // Prepare statements for town, subCity, and root
+        const townStatement = db.prepare(sqlTownTable);
+        const subCityStatement = db.prepare(sqlSubCityTable);
+        const rootStatement = db.prepare(sqlRootTable);
+        // Execute the statements to get town, subCity, and root data
+        const town = townStatement.get(townId);
+        const subCity = subCityStatement.get(subCityId);
+        const root = rootStatement.get(rootId);
+        // Return the police station data
+        res.status(200).json({
+            success: true,
+            data: station,
+            townName: town.townName,
+            subCityName: subCity.subCityName,
+            rootUsername: root.username,
+        });
+
+    } catch (error) {
+        console.error(`Error fetching police station with ID ${id}:`, error);
+        res.status(500).json({
+            success: false,
+            error: "Internal server error while fetching police station data",
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
 //@ get all posts which the police officer added in the database
 //@route GET /api/police/getAllPosts
 //@access point for know public
-const getAllPosts = (req,res)=>{
-    const ourStatment = db.prepare("SELECT * FROM posts")
-    const result = ourStatment.all()
-    res.status(201);
-    res.json({"message":"post method","name":`${result}`
-    });
-}
+const getAllPosts = (req, res) => {
+    const { id } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    // Validate ID parameter
+    if (!id || isNaN(Number(id))) {
+        return res.status(400).json({
+            success: false,
+            error: "Valid police station ID is required"
+        });
+    }
+
+    try {
+        // Get total count with the same filters
+        const countStmt = db.prepare(`
+            SELECT COUNT(*) as total 
+            FROM post 
+            WHERE policeStationId = ? AND postStatus = 1
+        `);
+        const { total } = countStmt.get(id);
+
+        // Get paginated posts
+        const statement = db.prepare(`
+            SELECT 
+                postId,
+                townId,
+                firstName,
+                middleName,
+                lastName,
+                age,
+                lastLocation,
+                gender,
+                policeOfficerId,
+                personStatus,
+                imagePath,
+                createdAt
+            FROM post 
+            WHERE policeStationId = ? AND postStatus = 1
+            ORDER BY createdAt DESC
+            LIMIT ? OFFSET ?
+        `);
+        
+        const posts = statement.all(id, limit, offset);
+
+        res.status(200).json({
+            success: true,
+            count: posts.length,
+            total,
+            currentPage: page,
+            totalPages: Math.ceil(total / limit),
+            data: posts
+        });
+
+    } catch (error) {
+        console.error("Error fetching posts:", error);
+        res.status(500).json({
+            success: false,
+            error: "Internal server error while fetching posts",
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
 //@desc get spacific post information in the database
 //@route GET /api/police/getPosts:id
 //@access point for know public
-const getPost = (req,res)=>{
-    const ourStatment = db.prepare("SELECT * FROM posts WHERE postId = ?")
-    const result = ourStatment.get(req.params.id)
-    res.status(201);
-    res.json({"message":"post method","name":`${result}`
-    });
-}
-//@desc get alart specific to police station information in the database
-//@route GET /api/police/getAlart:id
+const getSpecificPost = (req, res) => {
+    const { id } = req.params;
+
+    // Validate ID parameter
+    if (!id || isNaN(Number(id))) {
+        return res.status(400).json({
+            success: false,
+            error: "Valid post ID is required"
+        });
+    }
+
+    try {
+        // Get specific post with selected columns
+        const statement = db.prepare(`
+            SELECT 
+                postId,
+                townId,
+                subCityId,
+                postDescription,
+                firstName,
+                middleName,
+                lastName,
+                age,
+                lastLocation,
+                gender,
+                policeOfficerId,
+                policeStationId,
+                postStatus,
+                personStatus,
+                imageUrl,
+                created_at
+            FROM posts 
+            WHERE postId = ?
+        `);
+        
+        const post = statement.get(id);
+
+        // If post not found
+        if (!post) {
+            return res.status(404).json({
+                success: false,
+                error: "Post not found with the provided ID"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: post
+        });
+
+    } catch (error) {
+        console.error(`Error fetching post with ID ${id}:`, error);
+        res.status(500).json({
+            success: false,
+            error: "Internal server error while fetching post",
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+    }
+};
+//@desc add post to the database
+//@route POST /api/police/addPost
 //@access point for know public
-const getAlart = (req,res)=>{
-    const ourStatment = db.prepare("SELECT * FROM alert WHERE postPoliceStationId = ?")
-    const result = ourStatment.get(req.params.id)
-    res.status(201);
-    res.json({"message":"post method","name":`${result}`
-    });
+const addPost = (req, res) => {
+    const {
+        townId,
+        subCityId,
+        postDescription,
+        firstName,
+        middleName,
+        lastName,
+        age,
+        lastLocation,
+        gender,
+        policeOfficerId,
+        policeStationId,
+        postStatus,
+        personStatus,
+        imageUrl} = req.body;
+    // Validate required fields
+    if (!townId || !firstName || !lastName || !policeStationId ||!postDescription ||!middleName) {
+        return res.status(400).json({
+            success: false,
+            error: "townId, firstName, lastName, and policeStationId are required"
+        });
+    }
+    try {
+        const sql=`INSERT INTO post(
+        townId,
+        subCityId,
+        postDescription,
+        firstName,
+        middleName,
+        lastName,
+        age,
+        lastLocation,
+        gender,
+        policeOfficerId,
+        policeStationId,
+        postStatus,
+        personStatus,
+        imageUrl) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+        const statement = db.prepare(sql);
+        const result = statement.run(townId,subCityId,postDescription,firstName,middleName,lastName,age,lastLocation,gender,policeOfficerId,policeStationId,postStatus,personStatus,imageUrl);
+        if (result.changes > 0) {
+            return res.status(201).json({
+                success: true,
+                message: "Post added successfully",
+                postId: result.lastInsertRowid
+            });
+        } else {
+            return res.status(500).json({
+                success: false,
+                error: "Failed to add post"
+            });
+        }
+    } catch (error) {
+        console.error("Error adding post:", error);
+        return res.status(500).json({
+            success: false,
+            error: "Internal server error while adding post",
+        });
+        
+    }
 }
-//@desc get all message information in the database
-//@route GET /api/police/getMessage:id
-//@access point for know public
-const getMessage = (req,res)=>{
-    const ourStatment = db.prepare("SELECT * FROM message WHERE reciversId = ?")
-    const result = ourStatment.get(req.params.id)
-    res.status(201);
-    res.json({"message":"post method","name":`${result}`
-    });
-}
-//@desc get indivibual message information in the database
-//@route GET /api/police/getMessage:id
-//@access point for know public
-const getIndivibualMessage = (req,res)=>{
-    const ourStatment = db.prepare("SELECT * FROM message WHERE messageId = ?")
-    const result = ourStatment.get(req.params.id)
-    res.status(201);
-    res.json({"message":"post method","name":`${result}`
-    });
-}
+const editPost = async (req, res) => {
+    const { postId } = req.params;
+    const {
+        townId,
+        subCityId,
+        postDescription,
+        firstName,
+        middleName,
+        lastName,
+        age,
+        lastLocation,
+        gender,
+        policeOfficerId,
+        policeStationId,
+        postStatus,
+        personStatus,
+        imageUrl
+    } = req.body;
+
+    // Validate required fields
+    if (!postId || isNaN(Number(postId))) {
+        return res.status(400).json({
+            success: false,
+            error: "Valid post ID is required"
+        });
+    }
+
+    if (!townId || !firstName || !lastName || !policeStationId || !postDescription) {
+        return res.status(400).json({
+            success: false,
+            error: "townId, firstName, lastName, policeStationId, and postDescription are required"
+        });
+    }
+
+    try {
+        // First check if post exists
+        const checkStmt = db.prepare("SELECT postId FROM posts WHERE postId = ?");
+        const existingPost = checkStmt.get(postId);
+
+        if (!existingPost) {
+            return res.status(404).json({
+                success: false,
+                error: "Post not found with the provided ID"
+            });
+        }
+
+        // Update the post
+        const updateStmt = db.prepare(`
+            UPDATE posts SET
+                townId = ?,
+                subCityId = ?,
+                postDescription = ?,
+                firstName = ?,
+                middleName = ?,
+                lastName = ?,
+                age = ?,
+                lastLocation = ?,
+                gender = ?,
+                policeOfficerId = ?,
+                policeStationId = ?,
+                postStatus = ?,
+                personStatus = ?,
+                imageUrl = ?,
+            WHERE postId = ?
+        `);
+
+        const result = updateStmt.run(
+            townId,
+            subCityId,
+            postDescription,
+            firstName,
+            middleName,
+            lastName,
+            age,
+            lastLocation,
+            gender,
+            policeOfficerId,
+            policeStationId,
+            postStatus || 1, // Default to active if not provided
+            personStatus || 'unknown', // Default status
+            imageUrl,
+            postId
+        );
+
+        if (result.changes === 0) {
+            return res.status(500).json({
+                success: false,
+                error: "Failed to update post"
+            });
+        }
+
+        // Get the updated post to return
+        const getStmt = db.prepare("SELECT * FROM posts WHERE postId = ?");
+        const updatedPost = getStmt.get(postId);
+
+        res.status(200).json({
+            success: true,
+            message: "Post updated successfully",
+            data: updatedPost
+        });
+
+    } catch (error) {
+        console.error("Error updating post:", error);
+        res.status(500).json({
+            success: false,
+            error: "Internal server error while updating post",
+            
+        });
+    }
+};
+const getAllPoliceStationInfo = (req, res) => {
+    try {
+        const statement = db.prepare("SELECT * FROM policeStation WHERE rootId = ?");
+        const rootId = req.user.rootId; // Assuming you have middleware to set req.user
+        const stations = statement.run(rootId);
+
+        if (stations.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: "No police stations found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            count: stations.length,
+            data: stations
+        });
+
+    } catch (error) {
+        console.error("Error fetching police stations:", error);
+        res.status(500).json({
+            success: false,
+            error: "Internal server error while fetching police stations",
+            
+        });
+    }
+};
 module.exports={
-    registerNewPoliceOfficer,
-    getAllPoliceOfficer,
-    getAllPoliceStationInfo,
+    addPost,
+    editPost,
     getAllPosts,
-    getPost,
-    getAlart,
-    getMessage,
-    getIndivibualMessage
+    getSpecificPost,
+    getSpecificPoliceStationInfo,
+    getAllPoliceOfficerInOurPoliceStation,
+    postAlert,
+    alertInTheArea,
+    sendMessage,
+    addSubPoliceStation,
+    updatePoliceOfficerInfo,
+    registerNewPoliceOfficer,
+    viewReportForSpecificPost
 }

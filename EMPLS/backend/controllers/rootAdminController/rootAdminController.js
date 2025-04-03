@@ -1460,7 +1460,30 @@ const getSpecificPoliceStationInfo = (req,res)=>{
     const data = dataOfSpecificPoliceStation.get(id);
     res.status(201).json({"message":"police station information is here","data":data});
 }
-
+const promotUserToAdmin = (req,res)=>{
+    const {policeOfficerId}=req.body;
+    const sql=`SELECT * FROM policeOfficer WHERE policeOfficerId=?`;
+    const nameOfPoliceOfficer = db.prepare(sql);
+    const data = nameOfPoliceOfficer.get(policeOfficerId);
+    const firstName = data.policeOfficerFname;
+    const ourStatment = db.prepare("INSERT INTO rootUser(rootId,username,role,passwordText) VALUES (?,?,?,?)");
+    const result = ourStatment.run(policeOfficerId , firstName,"root","1234567#$@%^@(89646778898754%^^$$^33456654334&*(56643345");
+    if (result.changes > 0) {
+    res.status(201);
+    res.json({"message":"police officer data is INSERTED to admin","First Name":`${firstName}`,
+    });
+} else {
+    res.status(404).json({ message: "No police officer found with that ID" });
+}
+}
+const updateAdminInfo = (req,res)=>{
+    const {rootId,username,role,passwordText}=req.body;
+    const ourStatment = db.prepare("UPDATE root SET username=?, role=?, passwordText=? WHERE rootId=?")
+    const result = ourStatment.run(username,role,passwordText,rootId);
+    res.status(201);
+    res.json({"message":"message updated successfully","name":`${username}`
+    });
+}
 const test = (req,res)=>{
     try{
         const {name,password}=req.body;
@@ -1476,6 +1499,8 @@ const test = (req,res)=>{
 
 
 module.exports={
+    updateAdminInfo,
+    promotUserToAdmin,
     addRegion,
     registerPoliceStation,
     registerPoliceOfficerAdmin,

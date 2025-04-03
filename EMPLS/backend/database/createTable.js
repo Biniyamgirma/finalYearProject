@@ -67,7 +67,7 @@ const createTables = db.transaction(() => {
             policeOfficerFname TEXT NOT NULL,
             policeOfficerMname TEXT NOT NULL,
             policeOfficerLname TEXT NOT NULL,
-            profilePicture TEXT NOT NULL,
+            policeOfficerLname TEXT NOT NULL,
             policeOfficerRoleName TEXT NOT NULL,
             policeOfficerStatus INTEGER NOT NULL,
             policeOfficerPhoneNumber TEXT NOT NULL,
