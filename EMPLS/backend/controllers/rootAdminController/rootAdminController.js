@@ -1382,7 +1382,7 @@ const updatePoliceOfficerInfo = async (req, res) => {
 //@desc delete police officer information in the database
 //@route DELETE http://localhost:4023/api/police/root/delete-officer
 //@access point for know public
-const deletePoliceOfficer = (req,res)=>{
+const deletePoliceOfficer = (req,res)=>{// remember to change the name of the function to block the user
     const {policeOfficerId,policeStationId}=req.body;
     const sql=`SELECT * FROM policeOfficer WHERE policeOfficerId=?`;
     const nameOfPoliceOfficer = db.prepare(sql);
@@ -1423,7 +1423,7 @@ const getAllPoliceOfficer = (req, res) => {
     }
 };
 //@desc get all police station information in the database
-//@route GET /api/police/getAllPoliceStation
+//@route GET http://localhost:4023/api/police/root/get-all-police-station
 //@access point for know public
 const getAllPoliceStationInfo = (req, res) => {
     try {
@@ -1442,13 +1442,25 @@ const getAllPoliceStationInfo = (req, res) => {
 //@route PUT /api/police/:id updatePoliceStation
 //@access point for know public
 const updatePoliceStationInfo = (req,res)=>{
-    const {policeStationId,policeStationName,policeStationLocation,policeStationStatus}=req.body;
-    const ourStatment = db.prepare("UPDATE policeStation SET policeStationId=?, policeStationName=?, policeStationLocation=?, policeStationStatus=? WHERE policeStationId=?")
-    const result = ourStatment.run(policeStationId,policeStationName,policeStationLocation,policeStationStatus)
+    const {policeStationName,policeStationPhoneNumber,secPoliceStationPhoneNumber,policeStationLogo,townId,subCityId,rootId}=req.body;
+    const { id } = req.params; // Extract policeStationId from request parameters
+    const ourStatment = db.prepare("UPDATE policeStation SET nameOfPoliceStation=?, policeStationPhoneNumber=?, secPoliceStationPhoneNumber=? ,policeStationLogo=? ,townId=? , subCityId=?, rootId WHERE policeStationId=?")
+    const result = ourStatment.run(policeStationName,policeStationPhoneNumber,secPoliceStationPhoneNumber,policeStationLogo,townId,subCityId,rootId,id);
     res.status(201);
     res.json({"message":"message updated successfully","name":`${policeStationName}`
     });
 }
+//@desc get specific police station information in the database
+//@route GET http://localhost:4023/api/police/root/get-police-station/:id
+//@access point for know public
+const getSpecificPoliceStationInfo = (req,res)=>{
+    const { id } = req.params; // Extract policeStationId from request parameters
+    const sql=`SELECT * FROM policeStation WHERE policeStationId=?`;
+    const dataOfSpecificPoliceStation = db.prepare(sql);
+    const data = dataOfSpecificPoliceStation.get(id);
+    res.status(201).json({"message":"police station information is here","data":data});
+}
+
 const test = (req,res)=>{
     try{
         const {name,password}=req.body;
@@ -1474,5 +1486,6 @@ module.exports={
     updatePoliceStationInfo,
     test,
     addZone,
+    getSpecificPoliceStationInfo,
     addTown
 };

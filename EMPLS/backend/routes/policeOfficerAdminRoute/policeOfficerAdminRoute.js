@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const {getContacts} = require("../controllers/contactController");
+
 
 // routh for our homepage
 //@http request using get method

@@ -1,7 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const db = require("../../database/createDataBase");
-const {getAllPoliceStationInfo,updatePoliceStationInfo,deletePoliceOfficer,getAllPoliceOfficer,updatePoliceOfficerInfo,registerPoliceStation,test,addRegion,addCountry,addTown,addZone, registerPoliceOfficerAdmin} = require("../../controllers/rootAdminController/rootAdminController");
+const {getAllPoliceStationInfo,
+  updatePoliceStationInfo,
+  deletePoliceOfficer,
+  getAllPoliceOfficer,
+  updatePoliceOfficerInfo,
+  registerPoliceStation,
+  test,
+  addRegion,
+  addTown,
+  addZone, 
+  registerPoliceOfficerAdmin,
+  getSpecificPoliceStationInfo} = require("../../controllers/rootAdminController/rootAdminController");
 
 // base url /api/police/root
 
@@ -10,7 +21,8 @@ router.route("/register-police-officer").post(registerPoliceOfficerAdmin);
 router.route("/add-police-station").post(registerPoliceStation);
 //get route
 router.route("/get-all-police-officer").get(getAllPoliceOfficer);
-router.route("/get-all-police-station").get(getAllPoliceStationInfo);
+router.route("/get-all-police-station").get(getAllPoliceStationInfo)
+router.route("/update-police-station-info/:id").get(getSpecificPoliceStationInfo).put(updatePoliceStationInfo);
 router.route("/add-root-user").get(test);
 //put route
 router.route("/add-region").put(addRegion);
@@ -22,6 +34,5 @@ router.route("/delete-officer").delete(deletePoliceOfficer);
 router.route("/").get((req,res)=>{
   res.status(200).json({message:"hello from root admin route"});
 });
-  router.route("/police/station").get(getAllPoliceStationInfo).put(updatePoliceStationInfo).delete(deletePoliceOfficer);
-  router.route("/register/police/officer").post(registerPoliceStation); 
+
 module.exports = router;

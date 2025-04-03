@@ -29,7 +29,7 @@ app.use(function(req,res,next){
 //app.use("/api/police",require("./routes/contactRoutes"));// there is no any error in the route i just need to use localhost:4023/api/police
 // app.use("/api/police/admin",require("./routes/policeOfficerAdminRoute"));
 app.use("/api/police/police/officer",require("./routes/policeOfficerRoute"));
-app.use("/api/police/user",require("./routes/regularUserRoute"));
+app.use("/api/admin",require("./routes/policeOfficerAdminRoute/policeOfficerAdminRoute"));
 app.use("/api/police/root",require("./routes/routesForRootAdmin/rootAdminRoute"));
 app.use(errorHandler);
 
