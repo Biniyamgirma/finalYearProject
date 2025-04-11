@@ -808,5 +808,6 @@ module.exports={
     addSubPoliceStation,
     updatePoliceOfficerInfo,
     registerNewPoliceOfficer,
-    viewReportForSpecificPost
+    viewReportForSpecificPost,
+    getAllPoliceStationInfo
 }
