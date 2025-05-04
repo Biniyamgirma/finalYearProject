@@ -1,0 +1,58 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f8fafc;
+    margin: 0;
+    padding: 20px;
+  }
+
+  .report-header {
+    text-align: center;
+    color: #1e293b;
+  }
+
+  .report-container {
+    max-width: 800px;
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .report-card {
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-left: 5px solid #2563eb;
+  }
+
+  .report-card.police {
+    border-left-color: #22c55e;
+    background-color: #f0fdf4;
+  }
+
+  .report-title {
+    font-weight: bold;
+    font-size: 16px;
+    color: #0f172a;
+  }
+
+  .report-meta {
+    font-size: 14px;
+    color: #475569;
+    margin: 5px 0;
+  }
+
+  .report-desc {
+    font-size: 14px;
+    color: #1e293b;
+    margin-top: 10px;
+  }
+
+  .report-link {
+    margin-top: 10px;
+    display: inline-block;
+    color: #3b82f6;
+    text-decoration: none;
+    font-size: 14px;
+  }
