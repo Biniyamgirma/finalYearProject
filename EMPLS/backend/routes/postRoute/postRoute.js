@@ -13,9 +13,9 @@ const {addPost,
 
 
 router.route("/addpost").post(addPost);
-router.route("/allPostInCity").get(getAllPostInCity);
-router.route("/allPostInZone").get(getAllPostInZone);
-router.route("/allPostInRegion").get(getAllPostInRegion);
+router.route("/city").get(getAllPostInCity);
+router.route("/zone").get(getAllPostInZone);
+router.route("/region").get(getAllPostInRegion);
 
 router.route("/addPostToZone").post(addPostToZoneTable);
 router.route("/addPostToRegion").post(addPostToRegionTable);
