@@ -1,5 +1,6 @@
 const db=require("../../database/createDataBase");
 const bcrypt = require("bcrypt");
+
 // @desc    Register a new police officer admin
 // @route   POST /api/adminside/register
 // @access  Private (should be protected with admin auth middleware)
@@ -16,10 +17,10 @@ const registerNewPoliceOfficer = async (req, res) => {
         passwordText,
         policeOfficerGender,
         policeOfficerBirthdate,
-        role,
+        role,// 1 for root admin 2 for regional admin 3 for zone 4  for police officer
         policeStationId
     } = req.body;
-
+    
     // Input validation
     if (!policeOfficerFname || !policeOfficerLname || !policeStationId) {
         return res.status(400).json({
@@ -46,6 +47,7 @@ const registerNewPoliceOfficer = async (req, res) => {
             // Insert into database
             const statement = db.prepare(`
                 INSERT INTO policeOfficer (
+                    policeOfficerId,
                     policeOfficerFname,
                     policeOfficerMname,
                     policeOfficerLname,
@@ -58,14 +60,15 @@ const registerNewPoliceOfficer = async (req, res) => {
                     passwordText,
                     role,
                     policeStationId
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `);
-    
+            const policeOfficerId = require("../../helper/policeOfficer/generatePoliceOfficerId");
+            const id=policeOfficerId();
             const result = statement.run(
+                id,
                 policeOfficerFname,
                 policeOfficerMname,
                 policeOfficerLname,
-                profilePicture,
                 policeOfficerRoleName,
                 policeOfficerStatus,
                 policeOfficerPhoneNumber,
@@ -73,7 +76,8 @@ const registerNewPoliceOfficer = async (req, res) => {
                 policeOfficerBirthdate,
                 passwordHash,
                 role,
-                policeStationId
+                policeStationId,
+                profilePicture
             );
     
             if (result.changes > 0) {
@@ -109,6 +113,9 @@ const updatePoliceOfficerInfo = async (req, res) => {
     const { id } = req.params; // Extract policeOfficerId from request parameters
     console.log(id);
     console.log(req.body);
+    if (req.user.role < 2) {
+        return res.status(403).json({ message: "Forbidden: Only admins can edit police officers" });
+    }
     try {
         // Hash the password (use either hash or hashSync, not both)
         const saltRounds = 10;
@@ -166,9 +173,10 @@ const updatePoliceOfficerInfo = async (req, res) => {
 // //@access point for know public
 
 const addSubPoliceStation = (req,res)=>{
+    const policeStationId = require("../../helper/policeOfficer/generatePoliceStationId");
     try {
         const {nameOfPoliceStation,policeStationPhoneNumber,secPoliceStationPhoneNumber,policeStationLogo,townId,subCityId,adminId}=req.body;
-    const ourStatment = db.prepare("INSERT INTO policeStation(nameOfPoliceStation,policeStationPhoneNumber,secPoliceStationPhoneNumber,PoliceStationLogo,townId,subCityId,rootId) VALUES (?, ?, ?,?,?,?,?)")
+    const ourStatment = db.prepare("INSERT INTO policeStation(policeStationId,nameOfPoliceStation,policeStationPhoneNumber,secPoliceStationPhoneNumber,PoliceStationLogo,townId,subCityId,rootId) VALUES (?,?, ?, ?,?,?,?,?)")
     const result = ourStatment.run(nameOfPoliceStation,policeStationPhoneNumber,secPoliceStationPhoneNumber,policeStationLogo,townId,subCityId,adminId);
     res.status(201);
     res.json({"message":"data inserted successfully"});
@@ -677,12 +685,12 @@ const editPost = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (!postId || isNaN(Number(postId))) {
-        return res.status(400).json({
-            success: false,
-            error: "Valid post ID is required"
-        });
-    }
+    // if (!postId || isNaN(Number(postId))) {
+    //     return res.status(400).json({
+    //         success: false,
+    //         error: "Valid post ID is required"
+    //     });
+    // }
 
     if (!townId || !firstName || !lastName || !policeStationId || !postDescription) {
         return res.status(400).json({
@@ -693,7 +701,7 @@ const editPost = async (req, res) => {
 
     try {
         // First check if post exists
-        const checkStmt = db.prepare("SELECT postId FROM posts WHERE postId = ?");
+        const checkStmt = db.prepare("SELECT postId FROM post WHERE postId = ?");
         const existingPost = checkStmt.get(postId);
 
         if (!existingPost) {
@@ -795,6 +803,44 @@ const getAllPoliceStationInfo = (req, res) => {
         });
     }
 };
+
+const deletePoliceStation = (req, res) => {
+    const { policeStationId } = req.body;
+
+    // Validate ID parameter
+    if (!id || isNaN(Number(id))) {
+        return res.status(400).json({
+            success: false,
+            error: "Valid police station ID is required"
+        });
+    }
+
+    try {
+        // Delete the police station
+        const statement = db.prepare("DELETE FROM policeStation WHERE policeStationId = ?");
+        const result = statement.run(policeStationId);
+
+        if (result.changes === 0) {
+            return res.status(404).json({
+                success: false,
+                error: "Police station not found with the provided ID"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Police station deleted successfully"
+        });
+
+    } catch (error) {
+        console.error("Error deleting police station:", error);
+        res.status(500).json({
+            success: false,
+            error: "Internal server error while deleting police station",
+            
+        });
+    }
+};
 module.exports={
     addPost,
     editPost,
@@ -809,5 +855,6 @@ module.exports={
     updatePoliceOfficerInfo,
     registerNewPoliceOfficer,
     viewReportForSpecificPost,
-    getAllPoliceStationInfo
+    getAllPoliceStationInfo,
+    deletePoliceStation
 }

@@ -1,15 +1,10 @@
 const db=require("../../database/createDataBase.js");
 const bcrypt = require('bcrypt');
+const { hashPassword } = require('../../utils/jwtUtils');
 const addRegion = (req, res) => {
     try {
         const sql = "INSERT INTO region (regionId, regionName) VALUES (1, 'Addis Ababa'), (2, 'Afar'), (3, 'Amhara'), (4, 'Benishangul Gumz'), (5, 'Central Ethiopia'), (6, 'Dire Dawa'), (7, 'Gambela'), (8, 'Harari'), (9, 'Oromia'), (10, 'Sidama'), (11, 'South Ethiopia Region'), (12, 'Somali'), (13, 'South West Ethiopia'), (14, 'Tigray');";
         db.exec(sql);
-        if (!result) {
-            console.log("There is a problem with the data you are trying to insert.");
-            res.status(400).json({ message: "Failed to insert data into the database." });
-            return;
-        }
-        console.log(result);
         res.status(201).json({ message: "Region added successfully." });
     } catch (error) {
         console.error("Error inserting data:", error);
@@ -1214,14 +1209,32 @@ INSERT INTO town (townId, zoneId, regionId, townName, zoneName, regionName) VALU
             res.status(500).json({ message: "An error occurred while inserting data." });
         }
     };
+const addSubCity = (req, res) => {
+    const subCityName= "null";
+    const townId = 1;
+    try {
+        const statement = db.prepare("INSERT INTO subCity(subCityName, townId) VALUES (?, ?)");
+        const result = statement.run(subCityName, townId);
+        if (result.changes > 0) {
+            res.status(201).json({ message: "Sub-city added successfully." });
+        } else {
+            res.status(500).json({ message: "Failed to insert data." });
+        }
+    } catch (error) {
+        console.error("Error inserting data in subCity table:", error);
+        res.status(500).json({ message: "An error occurred while inserting data." });
+    }
+};
 //@desc register a new police station in the database
 //@route POST /api/police/root
 //@access point for know public
-const registerPoliceStation = (req,res)=>{
+const registerPoliceStation = async (req,res)=>{
+    const policeStationId=  require("../../helper/policeOfficer/generatePoliceStationId.js");
+    const idNumber = policeStationId();
     try {
         const {nameOfPoliceStation,policeStationPhoneNumber,secPoliceStationPhoneNumber,policeStationLogo,townId,subCityId,rootId}=req.body;
-    const ourStatment = db.prepare("INSERT INTO policeStation(nameOfPoliceStation,policeStationPhoneNumber,secPoliceStationPhoneNumber,PoliceStationLogo,townId,subCityId,rootId) VALUES (?, ?, ?,?,?,?,?)")
-    const result = ourStatment.run(nameOfPoliceStation,policeStationPhoneNumber,secPoliceStationPhoneNumber,policeStationLogo,townId,subCityId,rootId);
+    const ourStatment = db.prepare("INSERT INTO policeStation(policeStationId,nameOfPoliceStation,policeStationPhoneNumber,secPoliceStationPhoneNumber,PoliceStationLogo,townId,subCityId,rootId) VALUES (?,?, ?, ?,?,?,?,?)")
+    const result = ourStatment.run(idNumber,nameOfPoliceStation,policeStationPhoneNumber,secPoliceStationPhoneNumber,policeStationLogo,townId,subCityId,rootId);
     res.status(201);
     res.json({"message":"data inserted successfully"});
 } catch (error) {
@@ -1236,6 +1249,9 @@ const registerPoliceStation = (req,res)=>{
 //@route POST /api/police/registerPoliceOfficer
 //@access point for know public
 const registerPoliceOfficerAdmin = async (req, res) => {
+
+    const policeOfficerFunc= require("../../helper/policeOfficer/generatePoliceOfficerId.js")
+    const Id=policeOfficerFunc();
     const {
         policeOfficerFname,
         policeOfficerMname,
@@ -1258,12 +1274,12 @@ const registerPoliceOfficerAdmin = async (req, res) => {
 
     try {
         // Hash the password
-        const saltRounds = 10;
-        const passwordHash = await bcrypt.hash(passwordText, saltRounds);
+        const hashedPassword = await hashPassword(passwordText);
 
         // Insert into database
         const statement = db.prepare(`
             INSERT INTO policeOfficer (
+                policeOfficerId,
                 policeOfficerFname,
                 policeOfficerMname,
                 policeOfficerLname,
@@ -1276,10 +1292,11 @@ const registerPoliceOfficerAdmin = async (req, res) => {
                 passwordText,
                 role,
                 policeStationId
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         const result = statement.run(
+            Id,
             policeOfficerFname,
             policeOfficerMname,
             policeOfficerLname,
@@ -1289,7 +1306,7 @@ const registerPoliceOfficerAdmin = async (req, res) => {
             policeOfficerPhoneNumber,
             policeOfficerGender,
             policeOfficerBirthdate,
-            passwordHash,
+            hashedPassword,
             role,
             policeStationId
         );
@@ -1297,6 +1314,9 @@ const registerPoliceOfficerAdmin = async (req, res) => {
         if (result.changes > 0) {
             return res.status(201).json({
                 message: "Police officer registered successfully",
+                policeOfficerRole: policeOfficerRoleName,
+                policeOfficerId: Id,
+                policeOfficerFname: policeOfficerFname,
                 id: result.lastInsertRowid
             });
         } else {
@@ -1484,16 +1504,24 @@ const updateAdminInfo = (req,res)=>{
     res.json({"message":"message updated successfully","name":`${username}`
     });
 }
+const addRole = (req,res)=>{
+
+    const ourStatment = db.prepare("INSERT INTO role(roleId,roleName) VALUES ('4','Root Admin'),('3','Region Admin'),('2','Zone Admin'),('1','Town ')")
+    const result = ourStatment.run();
+    res.status(201);
+    res.json({"message":"message updated successfully" });
+}
 const test = (req,res)=>{
-    try{
         const {name,password}=req.body;
         res.status(201);
         console.log(req.body)
-        res.json({"message":"root user created successfully","name":`${name}`,"password":`${password}`});
-        console.log(name);
-    }catch(error){
-        console.log("error is the request method")
-    }
+          // Insert the data
+          
+  const sql = `INSERT INTO root (username, role,passwordText) VALUES (?, ?, ?)`;
+  const ourStatment = db.prepare(sql)
+  const result = ourStatment.run(name,1,password);
+  res.json({"message":"root user created successfully","name":`${name}`,"password":`${password}`});
+    
 }
 
 
@@ -1512,5 +1540,7 @@ module.exports={
     test,
     addZone,
     getSpecificPoliceStationInfo,
-    addTown
+    addTown,
+    addSubCity,
+    addRole
 };

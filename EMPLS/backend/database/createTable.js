@@ -50,7 +50,7 @@ const createTables = db.transaction(() => {
 
     db.prepare(`
         CREATE TABLE IF NOT EXISTS policeStation (
-            policeStationId INTEGER PRIMARY KEY,
+            policeStationId TEXT PRIMARY KEY,
             nameOfPoliceStation TEXT NOT NULL,
             policeStationPhoneNumber TEXT NOT NULL,
             secPoliceStationPhoneNumber TEXT NOT NULL,
@@ -63,10 +63,9 @@ const createTables = db.transaction(() => {
 
     db.prepare(`
         CREATE TABLE IF NOT EXISTS policeOfficer (
-            policeOfficerId INTEGER PRIMARY KEY,
+            policeOfficerId TEXT PRIMARY KEY,
             policeOfficerFname TEXT NOT NULL,
             policeOfficerMname TEXT NOT NULL,
-            policeOfficerLname TEXT NOT NULL,
             policeOfficerLname TEXT NOT NULL,
             policeOfficerRoleName TEXT NOT NULL,
             policeOfficerStatus INTEGER NOT NULL,
@@ -75,7 +74,8 @@ const createTables = db.transaction(() => {
             policeOfficerBirthdate TEXT NOT NULL,
             passwordText TEXT NOT NULL,
             role INTEGER NOT NULL,
-            policeStationId INTEGER REFERENCES policeStation(policeStationId) NOT NULL
+            profilePicture TEXT,
+            policeStationId TEXT REFERENCES policeStation(policeStationId) NOT NULL
         );
     `).run();
 
@@ -92,8 +92,8 @@ const createTables = db.transaction(() => {
             age TEXT NOT NULL,
             lastLocation TEXT,
             gender TEXT NOT NULL,
-            policeOfficerId INTEGER REFERENCES policeOfficer(policeOfficerId) NOT NULL,
-            policeStationId INTEGER REFERENCES policeStation(policeStationId) NOT NULL,
+            policeOfficerId TEXT REFERENCES policeOfficer(policeOfficerId) NOT NULL,
+            policeStationId TEXT REFERENCES policeStation(policeStationId) NOT NULL,
             postStatus INTEGER NOT NULL,
             personStatus TEXT NOT NULL,
             imagePath TEXT NOT NULL,
@@ -141,7 +141,7 @@ const createTables = db.transaction(() => {
             subCityId INTEGER REFERENCES subCity(subCityId),
             reportDescription TEXT,
             userId INTEGER,
-            policeStationId INTEGER REFERENCES policeStation(policeStationId)
+            policeStationId TEXT REFERENCES policeStation(policeStationId)
         );
     `).run();
 
@@ -167,15 +167,15 @@ const createTables = db.transaction(() => {
             age INTEGER,
             gender TEXT,
             fileNumber TEXT,
-            policeStationId INTEGER REFERENCES policeStation(policeStationId)
+            policeStationId TEXT REFERENCES policeStation(policeStationId)
         );
     `).run();
 
     db.prepare(`
         CREATE TABLE IF NOT EXISTS message (
             messageId INTEGER PRIMARY KEY,
-            sendersId INTEGER REFERENCES policeStation(policeStationId),
-            reciversId INTEGER REFERENCES policeStation(policeStationId),
+            sendersId TEXT REFERENCES policeStation(policeStationId),
+            reciversId TEXT REFERENCES policeStation(policeStationId),
             message TEXT,
             sentAt DATETIME DEFAULT CURRENT_TIMESTAMP,
             isRead INTEGER DEFAULT 0
@@ -186,13 +186,19 @@ const createTables = db.transaction(() => {
         CREATE TABLE IF NOT EXISTS alert (
             alertId INTEGER PRIMARY KEY,
             postId INTEGER REFERENCES post(postId),
-            localPoliceStationId INTEGER REFERENCES policeStation(policeStationId),
-            postPoliceStationId INTEGER REFERENCES policeStation(policeStationId),
+            localPoliceStationId TEXT REFERENCES policeStation(policeStationId),
+            postPoliceStationId TEXT REFERENCES policeStation(policeStationId),
             isRead INTEGER,
             priority INTEGER,
             reportId INTEGER REFERENCES report(reportId)
         );
     `).run();
+    db.prepare(`
+        CREATE TABLE IF NOT EXISTS role (
+            roleId INTEGER PRIMARY KEY DEFAULT 1,
+            roleName TEXT DEFAULT 'Town Officer'
+        );
+      `).run();
 });
 
 // Enable foreign key constraints
